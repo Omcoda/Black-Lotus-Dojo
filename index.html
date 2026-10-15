@@ -65,6 +65,37 @@
 .pin-keypad{display:grid;grid-template-columns:repeat(3,80px);gap:12px;margin-top:8px}.pin-key{width:80px;height:80px;border-radius:50%;background:#111;border:1px solid #222;color:#fff;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .pin-key:active{background:#ff0000;transform:scale(0.92)}.pin-key.empty{visibility:hidden}#pinError{color:#ff3333;font-size:13px;height:18px;margin-top:12px}
 .pin-footer{margin-top:32px;font-size:10px;letter-spacing:2px;color:#555;opacity:0.3}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.stat-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+.dash-actions{display:flex;gap:8px;margin-bottom:16px;}
+.btn-export{flex:1;background:#111;border:1px solid #1e1e1e;color:#bbb;padding:9px 12px;border-radius:20px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-new{flex:1.1;background:#fff;color:#000;padding:9px 14px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;}
+
+.banner-trial{background:linear-gradient(135deg,#1a0f0a,#2a1f0f);border:1px solid #3a2000;border-radius:16px;padding:14px;display:flex;align-items:center;gap:14px;margin-top:14px;}
+
+.classes-today{background:#111;border:1px solid #1a1a1a;border-radius:20px;padding:18px;margin-top:14px;}
+.class-row{background:#151515;border:1px solid #1f1f1f;border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.class-time{min-width:72px;background:#1a0a0a;border:1px solid #330000;border-radius:12px;padding:10px 8px;text-align:center;}
+.class-time .t{font-size:16px;font-weight:800;color:#fff;}
+.class-time .d{font-size:11px;color:#ff4444;margin-top:2px;}
+.class-info{flex:1;}
+.class-name{font-size:15px;font-weight:700;color:#fff;}
+.class-badge{background:#1a1a1a;border:1px solid #222;color:#999;font-size:10px;padding:5px 10px;border-radius:20px;}
+
+.chart-card{background:#111;border:1px solid #1a1a1a;border-radius:20px;padding:18px;margin-top:14px;}
+.bars{display:flex;align-items:flex-end;gap:12px;height:180px;margin-bottom:12px;padding:0 4px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;height:100%;}
+.bar{width:100%;background:#222;border-radius:12px 12px 4px 4px;min-height:12px;max-width:56px;}
+.bar.active{background:linear-gradient(180deg,#ff0000,#8B0000);}
+.bar-label{font-size:12px;color:#666;}
+.bar-label.active{color:#ff0000;font-weight:700;}
+.chart-foot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;border-top:1px solid #1a1a1a;padding-top:14px;margin-top:8px;}
+.foot-stat-label{font-size:9px;letter-spacing:1.2px;color:#666;margin-bottom:6px;}
+.foot-stat-value{font-size:15px;font-weight:700;color:#fff;}
+
 </style>
 </head>
 <body>
@@ -108,7 +139,27 @@
 <div class="edit-modal hidden" id="adicionalModal"><div class="edit-box"><div class="edit-title" id="adTitle">Editar Adicional</div><div style="margin-bottom:10px"><label style="font-size:11px;color:#666">Nombre</label><input id="adName" class="inp"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:11px;color:#666">Costo</label><input id="adCost" class="inp" type="number"></div><div><label style="font-size:11px;color:#666">Venta</label><input id="adPrice" class="inp" type="number"></div></div><div style="display:flex;gap:8px"><button class="btn btn-outline" style="flex:1" onclick="closeAd()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="saveAd()">Guardar</button></div></div></div>
 
 <script>
-let S;try{const raw=localStorage.getItem('BL_LOTUS_V31');S=raw?JSON.parse(raw):null}catch(e){S=null}
+
+// MIGRATION V34 - wipe old corrupted storage
+try{
+  const old = localStorage.getItem('BL_LOTUS_V31');
+  if(old){
+    const parsed = JSON.parse(old);
+    if(parsed && parsed.classes){
+      const hasBad = parsed.classes.some(c=>!c.s || c.s==='undefined' || !c.cap);
+      if(hasBad){
+        console.log('Bad old data detected, resetting to V34');
+        localStorage.removeItem('BL_LOTUS_V31');
+        localStorage.removeItem('BL_LOTUS_V34_FINAL');
+      }
+    }
+  }
+  // Also clear old keys
+  localStorage.removeItem('BL_LOTUS_V32');
+  localStorage.removeItem('BL_LOTUS_V33');
+}catch(e){}
+
+let S;try{const raw=localStorage.getItem('BL_LOTUS_V34_FINAL');S=raw?JSON.parse(raw):null}catch(e){S=null}
 if(!S){
   S={
     students:[
@@ -119,11 +170,11 @@ if(!S){
       {id:"5",name:"Luis Cruz",group:"Adults",disc:"Jiu Jitsu",belt:"Azul",stat:"Activo",createdAt:Date.now()-30*86400000}
     ],
     classes:[
-      {id:"1",name:"Jiu Jitsu Kids",disc:"Jiu Jitsu",group:"Kids",day:1,inst:"Tanaka",s:"16:00",e:"17:00",cap:"12/15",level:"Blanca"},
-      {id:"2",name:"Judo Teens",disc:"Judo",group:"Teens",day:1,inst:"Mendez",s:"17:00",e:"18:00",cap:"8/12",level:"Intermedio"},
-      {id:"3",name:"Kudo Adults",disc:"Kudo",group:"Adults",day:1,inst:"Kru Yod",s:"18:00",e:"19:30",cap:"10/15",level:"Todos"},
-      {id:"4",name:"Muay Thai",disc:"Kudo",group:"Teens",day:2,inst:"Kru Yod",s:"17:00",e:"18:00",cap:"15/18",level:"Intermedio"},
-      {id:"5",name:"Judo Kids",disc:"Judo",group:"Kids",day:3,inst:"Mendez",s:"16:00",e:"17:00",cap:"10/15",level:"Blanca"}
+      {id:"1",name:"Jiu Jitsu Kids",disc:"Jiu Jitsu",group:"Kids",day:1,inst:"Sensei",s:"16:00",e:"17:00",cap:"12/15",level:"Blanca"},
+      {id:"2",name:"Judo Teens",disc:"Judo",group:"Teens",day:1,inst:"Sensei",s:"17:00",e:"18:00",cap:"8/12",level:"Intermedio"},
+      {id:"3",name:"Kudo Adults",disc:"Kudo",group:"Adults",day:1,inst:"Sensei",s:"18:00",e:"19:30",cap:"10/15",level:"Todos"},
+      {id:"4",name:"Muay Thai",disc:"Kudo",group:"Teens",day:2,inst:"Sensei",s:"17:00",e:"18:00",cap:"15/18",level:"Intermedio"},
+      {id:"5",name:"Judo Kids",disc:"Judo",group:"Kids",day:3,inst:"Sensei",s:"16:00",e:"17:00",cap:"10/15",level:"Blanca"}
     ],
     trans:[
       {id:"1",type:"ingreso",desc:"Mensualidad Mayo - Diego",tipo:"Mensualidad",met:"Transferencia A",alumno:"Diego Mtz",amt:1200,date:"2025-05-15"},
@@ -157,13 +208,13 @@ const navItems=[
   {id:"monthlycv",label:"Monthly CV",icon:"📜"},
   {id:"config",label:"Configuración",icon:"⚙️"}
 ];
-function save(){try{localStorage.setItem('BL_LOTUS_V31',JSON.stringify(S));}catch(e){}}
+function save(){try{localStorage.setItem('BL_LOTUS_V34_FINAL',JSON.stringify(S));}catch(e){}}
 function toggleDrawer(open){const d=document.getElementById('drawer');const o=document.getElementById('drawerOverlay');if(open){d.classList.add('open');o.classList.add('open');}else{d.classList.remove('open');o.classList.remove('open');}}
 function renderDrawer(){
   const el=document.getElementById('drawerMenu');
   let h='';for(let n of navItems){h+= '<div class="menu-item '+(cur===n.id?'active':'')+'" onclick="cur=\''+n.id+'\';render();toggleDrawer(false)"><div class="micon">'+n.icon+'</div><div class="mlabel">'+n.label+'</div></div>';}
   el.innerHTML=h;
-  const activeCount=S.students.filter(s=>s.stat==='Activo').length;
+  const activeCount=S.students.filter(s=>s.stat==='Activo' || s.status==='active').length;
   const pct=Math.min(100,Math.round(activeCount/100*100));
   const cEl=document.getElementById('objCount'); if(cEl) cEl.textContent=activeCount+' / 100';
   const pEl=document.getElementById('objPct'); if(pEl) pEl.textContent=pct+'%';
@@ -219,32 +270,25 @@ function saveClassEdit(){
   save();closeClassEdit();render();
 }
 function deleteClass(){if(!editingClassId) return; if(confirm('¿Eliminar clase?')){S.classes=S.classes.filter(c=>c.id!==editingClassId);save();closeClassEdit();render();}}
-function openClassNew(){editingClassId=null;const modal=document.getElementById('editModal');const content=document.getElementById('editContent');document.getElementById('editTitle').textContent='Nueva Clase';content.innerHTML=`<div style="margin-bottom:10px"><label style="font-size:11px;color:#666">Nombre</label><input id="cName" class="inp" placeholder="Jiu Jitsu Kids"></div><div class="edit-grid"><div><label style="font-size:11px;color:#666">Disciplina</label><select id="cDisc" class="inp"><option>Jiu Jitsu</option><option>Judo</option><option>Kudo</option></select></div><div><label style="font-size:11px;color:#666">Grupo</label><select id="cGroup" class="inp"><option>Kids</option><option>Teens</option><option>Adults</option></select></div></div><div class="edit-grid"><div><label style="font-size:11px;color:#666">Inicio</label><input id="cS" class="inp" type="time" value="16:00"></div><div><label style="font-size:11px;color:#666">Fin</label><input id="cE" class="inp" type="time" value="17:00"></div></div><div class="edit-grid"><div><label style="font-size:11px;color:#666">Instructor</label><input id="cInst" class="inp" placeholder="Tanaka"></div><div><label style="font-size:11px;color:#666">Capacidad</label><input id="cCap" class="inp" placeholder="0/15"></div></div><div style="margin-bottom:12px"><label style="font-size:11px;color:#666">Nivel</label><select id="cLevel" class="inp"><option>Blanca</option><option>Intermedio</option><option>Todos</option></select></div><div style="display:flex;gap:8px"><button class="btn btn-outline" style="flex:1" onclick="closeClassEdit()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="saveClassNew()">Crear</button></div>`;modal.classList.remove('hidden');}
+function openClassNew(){editingClassId=null;const modal=document.getElementById('editModal');const content=document.getElementById('editContent');document.getElementById('editTitle').textContent='Nueva Clase';content.innerHTML=`<div style="margin-bottom:10px"><label style="font-size:11px;color:#666">Nombre</label><input id="cName" class="inp" placeholder="Jiu Jitsu Kids"></div><div class="edit-grid"><div><label style="font-size:11px;color:#666">Disciplina</label><select id="cDisc" class="inp"><option>Jiu Jitsu</option><option>Judo</option><option>Kudo</option></select></div><div><label style="font-size:11px;color:#666">Grupo</label><select id="cGroup" class="inp"><option>Kids</option><option>Teens</option><option>Adults</option></select></div></div><div class="edit-grid"><div><label style="font-size:11px;color:#666">Inicio</label><input id="cS" class="inp" type="time" value="16:00"></div><div><label style="font-size:11px;color:#666">Fin</label><input id="cE" class="inp" type="time" value="17:00"></div></div><div class="edit-grid"><div><label style="font-size:11px;color:#666">Instructor</label><input id="cInst" class="inp" placeholder="Sensei"></div><div><label style="font-size:11px;color:#666">Capacidad</label><input id="cCap" class="inp" placeholder="0/15"></div></div><div style="margin-bottom:12px"><label style="font-size:11px;color:#666">Nivel</label><select id="cLevel" class="inp"><option>Blanca</option><option>Intermedio</option><option>Todos</option></select></div><div style="display:flex;gap:8px"><button class="btn btn-outline" style="flex:1" onclick="closeClassEdit()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="saveClassNew()">Crear</button></div>`;modal.classList.remove('hidden');}
 function saveClassNew(){const newCls={id:Date.now().toString(),name:document.getElementById('cName').value.trim()||'Nueva Clase',disc:document.getElementById('cDisc').value,group:document.getElementById('cGroup').value,day:selectedDay,s:document.getElementById('cS').value||'16:00',e:document.getElementById('cE').value||'17:00',inst:document.getElementById('cInst').value.trim()||'Sensei',cap:document.getElementById('cCap').value.trim()||'0/15',level:document.getElementById('cLevel').value};S.classes.push(newCls);save();closeClassEdit();render();}
 function render(){
   renderDrawer();const c=document.getElementById('app');
-  const activeCount=S.students.filter(s=>s.stat==='Activo').length;
+  const activeCount=S.students.filter(s=>s.stat==='Activo' || s.status==='active').length;
   if(cur==='dashboard'){
     const ingresosChart=[42000,38000,45000,52000,48000,49500];
     const values=ingresosChart;
     const avg=Math.round(values.reduce((a,b)=>a+b,0)/values.length);
     const anual=avg*12;
-    const activeCount=S.students.filter(s=>s.status==='active').length;
-    const nuevosMes=S.students.filter(s=>{ const d=new Date(s.joinDate); return d.getMonth()===new Date().getMonth(); }).length;
-    const pruebaCount=S.students.filter(s=>s.status==='prueba').length||3;
+    const activeCount=S.students.filter(s=>s.stat==='Activo' || s.status==='active').length;
+    const nuevosMes=S.students.filter(s=>{ const raw=s.joinDate||s.createdAt; if(!raw) return false; const d=new Date(raw); return d.getMonth()===new Date().getMonth(); }).length;
+    const pruebaCount=S.students.filter(s=>s.stat==='Prueba').length||3;
     const hoy = new Date().toLocaleDateString('es-MX',{weekday:'long'});
     const clasesHoy=S.classes.filter(c=>{ return true; }).slice(0,5);
-    let clasesHtml='';
-    for(let cl of S.classes.slice(0,3)){
-      clasesHtml+=`<div class="class-row"><div class="class-time"><div class="time-h">${cl.time}</div><div class="time-d">60m</div></div><div class="class-info"><div class="class-name">${cl.name}</div><div class="class-meta">${cl.instructor} • ${cl.enrolled||10}/${cl.capacity||15}</div></div><div class="class-level">${cl.level||'Todos'}</div></div>`;
-    }
+    let clasesHtml='';S.classes.slice(0,3).forEach(cl=>{const safe={name:cl.name||'Clase',s:cl.s||cl.start||'16:00',cap:cl.cap||cl.capacity||'12/15',group:cl.group||'Todos',level:cl.level||'Todos'};clasesHtml+=`<div class="class-row"><div class="class-time"><div class="t">${safe.s}</div><div class="d">60m</div></div><div class="class-info"><div class="class-name">${safe.name}</div><div class="class-meta">${safe.cap} • ${safe.group}</div></div><div class="class-badge">${safe.level}</div></div>`;});
     const maxVal=Math.max(...values);
-    let barsHtml='';
-    const months=['Dic','Ene','Feb','Mar','Abr','May'];
-    for(let i=0;i<values.length;i++){
-      const h=Math.round((values[i]/maxVal)*60);
-      barsHtml+=`<div class="bar-col"><div class="bar" style="height:${h}px"></div><div class="bar-label">${months[i]}</div></div>`;
-    }
+    let barsHtml='';const months=['Dic','Ene','Feb','Mar','Abr','May'];
+    values.forEach((v,i)=>{const h=Math.max(20,Math.round(v/maxVal*100));const isActive=i===values.length-1;barsHtml+=`<div class="bar-wrap"><div class="bar ${isActive?'active':''}" style="height:${h}%"></div><div class="bar-label ${isActive?'active':''}">${months[i]}</div></div>`;});
     c.innerHTML=`
       <div class="dash-actions"><button class="btn-export">⬇ Exportar reporte</button><button class="btn-new" onclick="openTrialNew()">+ Nueva clase prueba</button></div>
       <div class="stat-grid">
@@ -366,6 +410,37 @@ body > div:last-child[style*="fixed"], body > div[style*="position: fixed"][styl
   display: none !important; height: 0 !important; opacity: 0 !important; transform: translateY(9999px) !important;
 }
 html, body { padding-bottom: 0 !important; margin-bottom: 0 !important; }
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.stat-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+.dash-actions{display:flex;gap:8px;margin-bottom:16px;}
+.btn-export{flex:1;background:#111;border:1px solid #1e1e1e;color:#bbb;padding:9px 12px;border-radius:20px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-new{flex:1.1;background:#fff;color:#000;padding:9px 14px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;}
+
+.banner-trial{background:linear-gradient(135deg,#1a0f0a,#2a1f0f);border:1px solid #3a2000;border-radius:16px;padding:14px;display:flex;align-items:center;gap:14px;margin-top:14px;}
+
+.classes-today{background:#111;border:1px solid #1a1a1a;border-radius:20px;padding:18px;margin-top:14px;}
+.class-row{background:#151515;border:1px solid #1f1f1f;border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.class-time{min-width:72px;background:#1a0a0a;border:1px solid #330000;border-radius:12px;padding:10px 8px;text-align:center;}
+.class-time .t{font-size:16px;font-weight:800;color:#fff;}
+.class-time .d{font-size:11px;color:#ff4444;margin-top:2px;}
+.class-info{flex:1;}
+.class-name{font-size:15px;font-weight:700;color:#fff;}
+.class-badge{background:#1a1a1a;border:1px solid #222;color:#999;font-size:10px;padding:5px 10px;border-radius:20px;}
+
+.chart-card{background:#111;border:1px solid #1a1a1a;border-radius:20px;padding:18px;margin-top:14px;}
+.bars{display:flex;align-items:flex-end;gap:12px;height:180px;margin-bottom:12px;padding:0 4px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;height:100%;}
+.bar{width:100%;background:#222;border-radius:12px 12px 4px 4px;min-height:12px;max-width:56px;}
+.bar.active{background:linear-gradient(180deg,#ff0000,#8B0000);}
+.bar-label{font-size:12px;color:#666;}
+.bar-label.active{color:#ff0000;font-weight:700;}
+.chart-foot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;border-top:1px solid #1a1a1a;padding-top:14px;margin-top:8px;}
+.foot-stat-label{font-size:9px;letter-spacing:1.2px;color:#666;margin-bottom:6px;}
+.foot-stat-value{font-size:15px;font-weight:700;color:#fff;}
+
 </style>
 <script>
 (function(){
